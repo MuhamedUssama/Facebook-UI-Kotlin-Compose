@@ -18,7 +18,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,29 +43,40 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
     val emailState = rememberTextFieldState()
     val passwordState = rememberTextFieldState()
 
-    var emailError by remember { mutableStateOf<String?>(null) }
-    var passwordError by remember { mutableStateOf<String?>(null) }
+    var isEmailInteracted by remember { mutableStateOf(false) }
+    var isPasswordInteracted by remember { mutableStateOf(false) }
 
-    var isUserInteracted by remember { mutableStateOf(false) }
-    var isUserWriteInPasswordField by remember { mutableStateOf(false) }
-
-    // AutoValidateMode for email like flutter
-    LaunchedEffect(emailState.text) {
-        val currentText = emailState.text.toString()
-
-        if (currentText.isNotEmpty()) isUserInteracted = true
-
-        if (isUserInteracted) emailError = validateEmail(currentText)
+    val emailError by remember {
+        derivedStateOf {
+            val text = emailState.text.toString()
+            if (text.isNotEmpty() || isEmailInteracted) validateEmail(text) else null
+        }
     }
 
-    // AutoValidateMode for password like flutter
-    LaunchedEffect(passwordState.text) {
-        val currentText = passwordState.text.toString()
-
-        if (currentText.isNotEmpty()) isUserWriteInPasswordField = true
-
-        if (isUserWriteInPasswordField) passwordError = validatePassword(currentText)
+    val passwordError by remember {
+        derivedStateOf {
+            val text = passwordState.text.toString()
+            if (text.isNotEmpty() || isPasswordInteracted) validatePassword(text) else null
+        }
     }
+
+//    // AutoValidateMode for email like flutter
+//    LaunchedEffect(emailState.text) {
+//        val currentText = emailState.text.toString()
+//
+//        if (currentText.isNotEmpty()) isUserInteracted = true
+//
+//        if (isUserInteracted) emailError = validateEmail(currentText)
+//    }
+//
+//    // AutoValidateMode for password like flutter
+//    LaunchedEffect(passwordState.text) {
+//        val currentText = passwordState.text.toString()
+//
+//        if (currentText.isNotEmpty()) isUserWriteInPasswordField = true
+//
+//        if (isUserWriteInPasswordField) passwordError = validatePassword(currentText)
+//    }
 
     Scaffold() { innerPadding ->
         Column(
@@ -102,10 +113,13 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
             Spacer(modifier = Modifier.height(32.dp))
             ElevatedButton(
                 onClick = {
-                    emailError = validateEmail(emailState.text.toString())
-                    passwordError = validatePassword(passwordState.text.toString())
+                    isEmailInteracted = true
+                    isPasswordInteracted = true
 
-                    if (emailError == null && passwordError == null) {
+                    val currentEmailErr = validateEmail(emailState.text.toString())
+                    val currentPassErr = validatePassword(passwordState.text.toString())
+
+                    if (currentEmailErr == null && currentPassErr == null) {
                         onLoginSuccess()
                     }
                 },
